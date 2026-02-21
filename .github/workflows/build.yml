@@ -1,0 +1,72 @@
+# GitHub Actions workflow for building the Dreamcast demo application.
+# Uses the same KallistiOS toolchain Docker image as the Dev Container.
+
+name: Build Dreamcast Demo
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  build:
+    name: Compile with KallistiOS toolchain
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+
+    # Use the same image as the Dev Container so the build environment matches exactly.
+    container:
+      image: einsteinx2/dcdev-kos-toolchain:gcc-9
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      # Source the KOS environment and run make in a single shell so that all
+      # KOS_* variables (KOS_BASE, KOS_CC, etc.) remain in scope for the build.
+      - name: Build demo application
+        run: |
+          . /opt/toolchains/dc/kos/environ.sh
+          make
+
+      - name: Verify ELF file was produced
+        run: |
+          if [ ! -f dreamcast_demo.elf ]; then
+            echo "ERROR: dreamcast_demo.elf was not created by the build." >&2
+            exit 1
+          fi
+          echo "Build succeeded: dreamcast_demo.elf exists."
+
+      - name: Upload ELF artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: dreamcast-demo-elf
+          path: dreamcast_demo.elf
+          retention-days: 30
+
+      # CDI creation is optional – only attempted when mkdcdisc / cdi4dc is present.
+      - name: Create CDI image (optional)
+        id: cdi
+        run: |
+          . /opt/toolchains/dc/kos/environ.sh
+          if command -v mkdcdisc > /dev/null 2>&1; then
+            mkdcdisc -e dreamcast_demo.elf -o dreamcast_demo.cdi
+            echo "created=true" >> "$GITHUB_OUTPUT"
+          elif command -v cdi4dc > /dev/null 2>&1; then
+            cdi4dc dreamcast_demo.elf dreamcast_demo.cdi
+            echo "created=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "No CDI creation tool found; skipping CDI image."
+            echo "created=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Upload CDI artifact
+        if: steps.cdi.outputs.created == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: dreamcast-demo-cdi
+          path: dreamcast_demo.cdi
+          retention-days: 30
