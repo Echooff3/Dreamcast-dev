@@ -30,7 +30,7 @@ jobs:
       - name: Build demo application
         run: |
           . /opt/toolchains/dc/kos/environ.sh
-          make
+          make all
 
       - name: Verify ELF file was produced
         run: |
