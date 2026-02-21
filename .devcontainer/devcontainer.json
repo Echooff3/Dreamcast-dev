@@ -1,0 +1,27 @@
+{
+  "name": "Dreamcast Dev (KallistiOS)",
+  "image": "einsteinx2/dcdev-kos-toolchain:gcc-9",
+  "remoteUser": "root",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-vscode.cpptools",
+        "ms-vscode.cpptools-extension-pack"
+      ],
+      "settings": {
+        "C_Cpp.default.compilerPath": "/opt/toolchains/dc/sh-elf/bin/sh-elf-gcc",
+        "C_Cpp.default.includePath": [
+          "${workspaceFolder}",
+          "/opt/toolchains/dc/kos/include",
+          "/opt/toolchains/dc/kos/kernel/arch/dreamcast/include",
+          "/opt/toolchains/dc/kos/addons/include"
+        ],
+        "C_Cpp.default.defines": [
+          "__DREAMCAST__",
+          "_arch_dreamcast"
+        ],
+        "C_Cpp.default.intelliSenseMode": "linux-gcc-x86"
+      }
+    }
+  }
+}
