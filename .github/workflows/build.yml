@@ -59,7 +59,8 @@ jobs:
       #   → CDI (cdi4dc <iso>)
       - name: Install CDI build dependencies
         run: |
-          apt-get install -y -q genisoimage
+          # The KOS toolchain image is Alpine-based; genisoimage is in the cdrkit package.
+          apk add --no-cache cdrkit
 
       - name: Create CDI image
         id: cdi
