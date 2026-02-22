@@ -87,9 +87,8 @@ jobs:
           "$KOS_BASE/utils/scramble/scramble" dreamcast_demo.bin 1ST_READ.BIN
 
           # Step 3: generate IP.BIN (the Dreamcast initial-program bootstrap).
-          # makeip uses built-in defaults when invoked without a template file;
-          # this is sufficient for a homebrew demo.
-          "$MAKEIP" ip.bin
+          # makeip requires: makeip <ip.txt> <IP.BIN>
+          "$MAKEIP" ip.txt ip.bin
 
           # Step 4: build the ISO9660 disc image.
           # -C 0,11702  sets the correct multi-session LBA offset for Dreamcast.
