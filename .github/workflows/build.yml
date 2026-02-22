@@ -47,31 +47,62 @@ jobs:
           path: dreamcast_demo.elf
           retention-days: 30
 
-      # CDI creation: convert the ELF to a scrambled binary first, then package
-      # it as a proper two-session self-boot CDI that Flycast (and real hardware)
-      # can execute.  Passing the raw ELF to cdi4dc produces a broken image that
-      # the Dreamcast treats as an audio CD.
+      # CDI creation: build a proper two-session self-boot CDI with an ISO9660
+      # data track so that Flycast (and real hardware) recognises it as data,
+      # not audio.  Passing a raw binary to cdi4dc produces a trackless data
+      # section with no filesystem, which Flycast misidentifies as an audio CD.
+      #
+      # Correct pipeline:
+      #   ELF → raw binary (objcopy) → 1ST_READ.BIN (scramble)
+      #   + IP.BIN (makeip)
+      #   → ISO9660 (genisoimage -C 0,11702 -G ip.bin)
+      #   → CDI (cdi4dc <iso>)
+      - name: Install CDI build dependencies
+        run: |
+          apt-get install -y -q genisoimage
+
       - name: Create CDI image
         id: cdi
         run: |
           . /opt/toolchains/dc/kos/environ.sh
-          if command -v mkdcdisc > /dev/null 2>&1; then
-            # mkdcdisc accepts the ELF directly and handles scrambling internally.
-            mkdcdisc -e dreamcast_demo.elf -o dreamcast_demo.cdi
-            echo "created=true" >> "$GITHUB_OUTPUT"
-          elif command -v cdi4dc > /dev/null 2>&1; then
-            # cdi4dc needs a scrambled binary, not the raw ELF.
-            # Step 1: extract raw binary from the ELF
-            sh-elf-objcopy -O binary dreamcast_demo.elf dreamcast_demo.bin
-            # Step 2: scramble it (required for Dreamcast self-boot)
-            "$KOS_BASE/utils/scramble/scramble" dreamcast_demo.bin 1ST_READ.BIN
-            # Step 3: package into a self-boot CDI
-            cdi4dc 1ST_READ.BIN dreamcast_demo.cdi
-            echo "created=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "No CDI creation tool found; skipping CDI image."
+
+          MAKEIP="$KOS_BASE/utils/makeip/makeip"
+
+          if [ ! -f "$MAKEIP" ]; then
+            echo "makeip not found at $MAKEIP; skipping CDI image."
             echo "created=false" >> "$GITHUB_OUTPUT"
+            exit 0
           fi
+          if ! command -v cdi4dc > /dev/null 2>&1; then
+            echo "cdi4dc not found; skipping CDI image."
+            echo "created=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          # Step 1: extract raw binary from the ELF
+          sh-elf-objcopy -O binary dreamcast_demo.elf dreamcast_demo.bin
+
+          # Step 2: scramble for Dreamcast self-boot CD
+          "$KOS_BASE/utils/scramble/scramble" dreamcast_demo.bin 1ST_READ.BIN
+
+          # Step 3: generate IP.BIN (the Dreamcast initial-program bootstrap).
+          # makeip uses built-in defaults when invoked without a template file;
+          # this is sufficient for a homebrew demo.
+          "$MAKEIP" ip.bin
+
+          # Step 4: build the ISO9660 disc image.
+          # -C 0,11702  sets the correct multi-session LBA offset for Dreamcast.
+          # -G ip.bin   injects IP.BIN as the boot sector.
+          mkdir -p disc
+          cp 1ST_READ.BIN disc/
+          genisoimage -C 0,11702 -V "DREAMCAST" -G ip.bin \
+            -r -J -l -o data.iso disc/
+
+          # Step 5: wrap the ISO into a CDI.
+          # Passing the ISO (not the raw binary) gives cdi4dc a proper ISO9660
+          # data track that Flycast recognises as a data disc.
+          cdi4dc data.iso dreamcast_demo.cdi
+          echo "created=true" >> "$GITHUB_OUTPUT"
 
       - name: Upload CDI artifact
         if: steps.cdi.outputs.created == 'true'
