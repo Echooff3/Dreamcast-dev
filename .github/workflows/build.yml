@@ -67,10 +67,10 @@ jobs:
         run: |
           . /opt/toolchains/dc/kos/environ.sh
 
-          MAKEIP="$KOS_BASE/utils/makeip/makeip"
+          IPTMPL="$KOS_BASE/utils/makeip/IP.TMPL"
 
-          if [ ! -f "$MAKEIP" ]; then
-            echo "makeip not found at $MAKEIP; skipping CDI image."
+          if [ ! -f "$IPTMPL" ]; then
+            echo "IP.TMPL not found at $IPTMPL; skipping CDI image."
             echo "created=false" >> "$GITHUB_OUTPUT"
             exit 0
           fi
@@ -86,10 +86,10 @@ jobs:
           # Step 2: scramble for Dreamcast self-boot CD
           "$KOS_BASE/utils/scramble/scramble" dreamcast_demo.bin 1ST_READ.BIN
 
-          # Step 3: generate IP.BIN (the Dreamcast initial-program bootstrap).
-          # makeip looks for IP.TMPL in the current directory, so copy it first.
-          cp "$KOS_BASE/utils/makeip/IP.TMPL" .
-          "$MAKEIP" ip.txt ip.bin
+          # Step 3: use IP.TMPL directly as the boot sector.
+          # IP.TMPL is the default KOS IP.BIN template — all fields are pre-filled
+          # with standard homebrew defaults, so makeip is not needed for a demo.
+          cp "$IPTMPL" ip.bin
 
           # Step 4: build the ISO9660 disc image.
           # -C 0,11702  sets the correct multi-session LBA offset for Dreamcast.
