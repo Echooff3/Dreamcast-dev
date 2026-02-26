@@ -23,6 +23,10 @@
 #include <stdio.h>
 #include <string.h>
 
+#ifndef M_PI
+#define M_PI 3.14159265358979323846
+#endif
+
 #include "glb_loader.h"
 #include "glb_anim.h"
 
@@ -310,7 +314,6 @@ int main(void)
 
     /* -- Animation state -------------------------------------------------- */
     int current_anim = 0;
-    int prev_anim = 0;
     int blending_enabled = 1;
     float blend_factor = 1.0f; /* 1.0 = fully current, 0.0 = fully previous */
 
@@ -359,7 +362,6 @@ int main(void)
 
                 /* A: cycle animation */
                 if ((newly_pressed & CONT_A) && model.animation_count > 0) {
-                    prev_anim = current_anim;
                     prev_anim_state = anim_state;
                     current_anim = (current_anim + 1) % model.animation_count;
                     glb_anim_init(&anim_state, current_anim, 1.0f, 1);
