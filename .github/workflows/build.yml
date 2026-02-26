@@ -32,6 +32,11 @@ jobs:
           . /opt/toolchains/dc/kos/environ.sh
           make all
 
+      - name: Build GLB viewer demo
+        run: |
+          . /opt/toolchains/dc/kos/environ.sh
+          cd glb_viewer && make all
+
       - name: Verify ELF file was produced
         run: |
           if [ ! -f dreamcast_demo.elf ]; then
@@ -39,12 +44,19 @@ jobs:
             exit 1
           fi
           echo "Build succeeded: dreamcast_demo.elf exists."
+          if [ ! -f glb_viewer/glb_viewer.elf ]; then
+            echo "ERROR: glb_viewer.elf was not created by the build." >&2
+            exit 1
+          fi
+          echo "Build succeeded: glb_viewer.elf exists."
 
-      - name: Upload ELF artifact
+      - name: Upload ELF artifacts
         uses: actions/upload-artifact@v4
         with:
           name: dreamcast-demo-elf
-          path: dreamcast_demo.elf
+          path: |
+            dreamcast_demo.elf
+            glb_viewer/glb_viewer.elf
           retention-days: 30
 
       # CDI creation: build a proper two-session self-boot CDI with an ISO9660
