@@ -44,9 +44,10 @@ static pvr_ptr_t upload_texture(const uint8_t *rgba, int w, int h, int has_alpha
     int ph = next_power_of_2(h);
     if (pw < 8) pw = 8;
     if (ph < 8) ph = 8;
+    if (pw > 1024 || ph > 1024) return NULL; /* PVR max texture size */
 
     /* Convert to 16-bit format */
-    uint16_t *tex_data = malloc(pw * ph * 2);
+    uint16_t *tex_data = malloc((size_t)pw * ph * 2);
     if (!tex_data) return NULL;
 
     for (int y = 0; y < ph; y++) {
@@ -70,11 +71,11 @@ static pvr_ptr_t upload_texture(const uint8_t *rgba, int w, int h, int has_alpha
         }
     }
 
-    pvr_ptr_t pvr_mem = pvr_mem_malloc(pw * ph * 2);
+    pvr_ptr_t pvr_mem = pvr_mem_malloc((size_t)pw * ph * 2);
     if (pvr_mem) {
         /* Use raw load (no twiddling) - pair with PVR_TXRFMT_NONTWIDDLED
          * in the polygon context when rendering. */
-        pvr_txr_load(tex_data, pvr_mem, pw * ph * 2);
+        pvr_txr_load(tex_data, pvr_mem, (size_t)pw * ph * 2);
     }
     free(tex_data);
 

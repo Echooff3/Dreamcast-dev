@@ -37,7 +37,7 @@ KOS_INIT_ROMDISK(romdisk);
 #define NEAR_PLANE  0.1f
 #define FAR_PLANE   100.0f
 #define FOV_Y       60.0f
-#define BLEND_SPEED 3.0f   /* Blend transition speed (1/seconds) */
+#define BLEND_SPEED 3.0f   /* Blend factor increase per second */
 
 /* -------------------------------------------------------------------------
  * Camera state
@@ -330,6 +330,13 @@ int main(void)
     }
     glb_vec3_t *skinned_pos = malloc(max_verts * sizeof(glb_vec3_t));
     glb_vec3_t *skinned_nrm = malloc(max_verts * sizeof(glb_vec3_t));
+    if (!skinned_pos || !skinned_nrm) {
+        printf("ERROR: Failed to allocate vertex buffers!\n");
+        free(skinned_pos);
+        free(skinned_nrm);
+        glb_free(&model);
+        return 1;
+    }
 
     /* -- Projection matrix (constant) ------------------------------------- */
     float proj[16];

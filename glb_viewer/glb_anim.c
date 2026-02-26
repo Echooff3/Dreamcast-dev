@@ -11,6 +11,9 @@
 
 #include "glb_anim.h"
 
+/* Small epsilon for float comparisons (length checks, weight thresholds) */
+#define GLB_EPSILON 0.0001f
+
 /* -------------------------------------------------------------------------
  * Quaternion / vector math helpers
  * ------------------------------------------------------------------------- */
@@ -56,7 +59,7 @@ static glb_vec4_t quat_slerp(glb_vec4_t a, glb_vec4_t b, float t)
 
     /* Normalize */
     float len = sqrtf(r.x * r.x + r.y * r.y + r.z * r.z + r.w * r.w);
-    if (len > 0.0001f) {
+    if (len > GLB_EPSILON) {
         float inv = 1.0f / len;
         r.x *= inv; r.y *= inv; r.z *= inv; r.w *= inv;
     }
@@ -324,7 +327,7 @@ void glb_anim_skin_vertices(const glb_model_t *model, int mesh_index,
 
         for (int w = 0; w < 4; w++) {
             float weight = vert->weights[w];
-            if (weight < 0.0001f) continue;
+            if (weight < GLB_EPSILON) continue;
 
             int joint_idx = vert->joints[w];
             if (joint_idx >= model->joint_count) continue;
@@ -345,7 +348,7 @@ void glb_anim_skin_vertices(const glb_model_t *model, int mesh_index,
 
         /* Normalize the normal */
         float len = sqrtf(nrm.x * nrm.x + nrm.y * nrm.y + nrm.z * nrm.z);
-        if (len > 0.0001f) {
+        if (len > GLB_EPSILON) {
             float inv = 1.0f / len;
             nrm.x *= inv; nrm.y *= inv; nrm.z *= inv;
         }
