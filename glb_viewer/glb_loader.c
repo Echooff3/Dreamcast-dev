@@ -72,7 +72,9 @@ static pvr_ptr_t upload_texture(const uint8_t *rgba, int w, int h, int has_alpha
 
     pvr_ptr_t pvr_mem = pvr_mem_malloc(pw * ph * 2);
     if (pvr_mem) {
-        pvr_txr_load_ex(tex_data, pvr_mem, pw, ph, PVR_TXRLOAD_16BPP);
+        /* Use raw load (no twiddling) - pair with PVR_TXRFMT_NONTWIDDLED
+         * in the polygon context when rendering. */
+        pvr_txr_load(tex_data, pvr_mem, pw * ph * 2);
     }
     free(tex_data);
 
