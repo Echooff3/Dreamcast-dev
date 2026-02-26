@@ -131,7 +131,6 @@ static int project_vertex(const float *mvp, float x, float y, float z,
 {
     float cx = mvp[0]*x + mvp[4]*y + mvp[8]*z  + mvp[12];
     float cy = mvp[1]*x + mvp[5]*y + mvp[9]*z  + mvp[13];
-    float cz = mvp[2]*x + mvp[6]*y + mvp[10]*z + mvp[14];
     float cw = mvp[3]*x + mvp[7]*y + mvp[11]*z + mvp[15];
 
     if (cw < 0.001f) return 0; /* Behind camera */

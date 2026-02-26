@@ -131,7 +131,7 @@ static int load_textures(cgltf_data *data, glb_model_t *model)
             }
         }
 
-        int tw, th;
+        int tw = 0, th = 0;
         model->textures[i].pvr_mem = upload_texture(pixels, w, h, has_alpha, &tw, &th);
         model->textures[i].width = tw;
         model->textures[i].height = th;
