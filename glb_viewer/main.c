@@ -48,7 +48,7 @@ KOS_INIT_ROMDISK(romdisk);
  * ------------------------------------------------------------------------- */
 static float cam_angle_y = 0.0f;   /* Horizontal rotation (radians) */
 static float cam_angle_x = 0.3f;   /* Vertical tilt (radians) */
-static float cam_distance = 4.0f;  /* Distance from center */
+static float cam_distance = 3.0f;  /* Distance from center */
 
 /* -------------------------------------------------------------------------
  * Perspective projection helper
@@ -70,17 +70,19 @@ static void build_perspective(float *m, float fov_deg, float aspect,
 }
 
 /* -------------------------------------------------------------------------
- * View matrix: look at origin from a spherical camera position
+ * View matrix: look at a target point from a spherical camera position
  * ------------------------------------------------------------------------- */
+static const float CAM_TARGET_Y = 0.85f; /* Model center height */
+
 static void build_view(float *m, float angle_y, float angle_x, float dist)
 {
-    /* Camera position in world space */
+    /* Camera position in world space (orbits around model center) */
     float cx = dist * cosf(angle_x) * sinf(angle_y);
-    float cy = dist * sinf(angle_x);
+    float cy = CAM_TARGET_Y + dist * sinf(angle_x);
     float cz = dist * cosf(angle_x) * cosf(angle_y);
 
-    /* Forward (camera looks at origin) */
-    float fx = -cx, fy = -cy, fz = -cz;
+    /* Forward (camera looks at target) */
+    float fx = 0.0f - cx, fy = CAM_TARGET_Y - cy, fz = 0.0f - cz;
     float flen = sqrtf(fx * fx + fy * fy + fz * fz);
     fx /= flen; fy /= flen; fz /= flen;
 
