@@ -44,21 +44,61 @@ static pvr_ptr_t upload_texture(const uint8_t *rgba, int w, int h, int has_alpha
     int ph = next_power_of_2(h);
     if (pw < 8) pw = 8;
     if (ph < 8) ph = 8;
-    if (pw > 1024 || ph > 1024) return NULL; /* PVR max texture size */
+
+    /* Downscale source to fit PVR max texture size (1024x1024).
+     * Uses simple 2x2 box filter for each halving step. */
+    const uint8_t *src = rgba;
+    uint8_t *scaled = NULL;
+    int sw = w, sh = h;
+
+    while (pw > 1024 || ph > 1024) {
+        int nw = sw / 2;
+        int nh = sh / 2;
+        if (nw < 1) nw = 1;
+        if (nh < 1) nh = 1;
+
+        uint8_t *dst = malloc((size_t)nw * nh * 4);
+        if (!dst) { free(scaled); return NULL; }
+
+        for (int y = 0; y < nh; y++) {
+            for (int x = 0; x < nw; x++) {
+                int x0 = x * 2, y0 = y * 2;
+                int x1 = (x0 + 1 < sw) ? x0 + 1 : x0;
+                int y1 = (y0 + 1 < sh) ? y0 + 1 : y0;
+                for (int c = 0; c < 4; c++) {
+                    int sum = src[(y0 * sw + x0) * 4 + c]
+                            + src[(y0 * sw + x1) * 4 + c]
+                            + src[(y1 * sw + x0) * 4 + c]
+                            + src[(y1 * sw + x1) * 4 + c];
+                    dst[(y * nw + x) * 4 + c] = (uint8_t)(sum / 4);
+                }
+            }
+        }
+
+        free(scaled);
+        scaled = dst;
+        src = scaled;
+        sw = nw;
+        sh = nh;
+        pw = next_power_of_2(sw);
+        ph = next_power_of_2(sh);
+        if (pw < 8) pw = 8;
+        if (ph < 8) ph = 8;
+    }
 
     /* Convert to 16-bit format */
     uint16_t *tex_data = malloc((size_t)pw * ph * 2);
-    if (!tex_data) return NULL;
+    if (!tex_data) { free(scaled); return NULL; }
 
     for (int y = 0; y < ph; y++) {
         for (int x = 0; x < pw; x++) {
-            int sx = (x < w) ? x : w - 1;
-            int sy = (y < h) ? y : h - 1;
-            int si = (sy * w + sx) * 4;
-            uint8_t r = rgba[si + 0];
-            uint8_t g = rgba[si + 1];
-            uint8_t b = rgba[si + 2];
-            uint8_t a = rgba[si + 3];
+            int sx = (x < sw) ? x : sw - 1;
+            int sy = (y < sh) ? y : sh - 1;
+            int si = (sy * sw + sx) * 4;
+            uint8_t r = src[si + 0];
+            uint8_t g = src[si + 1];
+            uint8_t b = src[si + 2];
+            uint8_t a = src[si + 3];
 
             if (has_alpha) {
                 /* ARGB4444 */
@@ -70,6 +110,8 @@ static pvr_ptr_t upload_texture(const uint8_t *rgba, int w, int h, int has_alpha
             }
         }
     }
+
+    free(scaled);
 
     pvr_ptr_t pvr_mem = pvr_mem_malloc((size_t)pw * ph * 2);
     if (pvr_mem) {

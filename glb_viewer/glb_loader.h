@@ -18,7 +18,7 @@
 #define GLB_MAX_JOINTS      64
 #define GLB_MAX_ANIMATIONS  16
 #define GLB_MAX_KEYFRAMES   256
-#define GLB_MAX_CHANNELS    64
+#define GLB_MAX_CHANNELS    192
 
 /* -------------------------------------------------------------------------
  * Math types

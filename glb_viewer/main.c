@@ -48,7 +48,7 @@ KOS_INIT_ROMDISK(romdisk);
  * ------------------------------------------------------------------------- */
 static float cam_angle_y = 0.0f;   /* Horizontal rotation (radians) */
 static float cam_angle_x = 0.3f;   /* Vertical tilt (radians) */
-static float cam_distance = 3.0f;  /* Distance from center */
+static float cam_distance = 4.0f;  /* Distance from center */
 
 /* -------------------------------------------------------------------------
  * Perspective projection helper
