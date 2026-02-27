@@ -57,7 +57,7 @@ static pvr_ptr_t upload_texture(const uint8_t *rgba, int w, int h, int has_alpha
         if (nw < 1) nw = 1;
         if (nh < 1) nh = 1;
 
-        uint8_t *dst = malloc((size_t)nw * nh * 4);
+        uint8_t *dst = malloc((size_t)nw * (size_t)nh * 4);
         if (!dst) { free(scaled); return NULL; }
 
         for (int y = 0; y < nh; y++) {
